@@ -2,26 +2,456 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anti-Ludomania Mini App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>RubUp - Анти-азартный Симулятор</title>
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: #1a1d2d;
+            --accent-purple: #6c5ce7;
+            --accent-blue: #00cec9;
+            --text-main: #ffffff;
+            --text-sub: #a0a5b5;
+            --btn-green: #2ed573;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
             margin: 0;
-            background-color: #000000; /* Черный экран */
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+            padding-bottom: 30px;
+        }
+
+        /* Шапка приложения */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background-color: #141724;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #fff, #a29bfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .balance-container {
+            display: flex;
+            align-items: center;
+            background: #090a10;
+            border-radius: 20px;
+            padding: 4px 6px 4px 12px;
+            border: 1px solid #282c40;
+        }
+
+        .balance-amount {
+            font-weight: 700;
+            font-size: 14px;
+            margin-right: 8px;
+            color: #2ed573;
+        }
+
+        .btn-topup {
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(108, 92, 231, 0.4);
+        }
+
+        .btn-topup:active {
+            transform: scale(0.96);
+        }
+
+        /* Главный контейнер */
+        .container {
+            padding: 12px;
+        }
+
+        /* Баннер Акция / Подарок */
+        .promo-banner {
+            background: linear-gradient(135deg, #2b1055, #7597de);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 120px;
+        }
+
+        .promo-title {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0 0 4px 0;
+        }
+
+        .promo-desc {
+            font-size: 11px;
+            color: #dcdde1;
+            margin-bottom: 12px;
+            max-width: 65%;
+        }
+
+        .promo-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            width: fit-content;
+            cursor: pointer;
+        }
+
+        /* Бегущая лента LIVE ставок */
+        .live-feed {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            margin-bottom: 8px;
+            scrollbar-width: none;
+        }
+
+        .live-feed::-webkit-scrollbar {
+            display: none;
+        }
+
+        .live-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 6px 10px;
+            white-space: nowrap;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #25293c;
+            flex-shrink: 0;
+        }
+
+        .live-card .win {
+            color: #2ed573;
+            font-weight: 700;
+        }
+
+        /* Раздел Игры */
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 12px 0;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            aspect-ratio: 1 / 0.9;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+            border: 1px solid #282c40;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .game-card:active {
+            transform: scale(0.97);
+        }
+
+        .online-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            padding: 3px 6px;
+            border-radius: 10px;
+            font-size: 9px;
+            color: #a0a5b5;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .online-dot {
+            width: 5px;
+            height: 5px;
+            background: #2ed573;
+            border-radius: 50%;
+        }
+
+        .game-name {
+            font-size: 14px;
+            font-weight: 700;
+            z-index: 2;
+        }
+
+        /* Заглушки для фона карт игр */
+        .card-bg-upgrade { background: linear-gradient(180deg, rgba(255, 107, 107, 0.1), #1a1d2d); }
+        .card-bg-storm { background: linear-gradient(180deg, rgba(162, 155, 254, 0.1), #1a1d2d); }
+        .card-bg-rocket { background: linear-gradient(180deg, rgba(253, 121, 168, 0.1), #1a1d2d); }
+        .card-bg-cases { background: linear-gradient(180deg, rgba(9, 132, 227, 0.1), #1a1d2d); }
+
+        /* Футер */
+        footer {
+            margin-top: 24px;
+            padding: 16px 12px;
+            border-top: 1px solid #1f2334;
+            font-size: 11px;
+            color: var(--text-sub);
+            text-align: center;
+        }
+
+        .footer-links {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
         }
-        h1 {
-            font-size: 20px;
-            font-weight: 400;
+
+        .footer-link {
+            color: var(--text-sub);
+            text-decoration: none;
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background: #181b29;
+            border: 1px solid #2d3248;
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .modal-desc {
+            font-size: 13px;
+            color: #a0a5b5;
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        .btn-modal-close {
+            background: var(--accent-purple);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>Черный экран работает! Ждем код игры.</h1>
+
+    <!-- Шапка -->
+    <header>
+        <div class="logo">RubUp</div>
+        <div class="balance-container">
+            <span class="balance-amount" id="balance">1 000 ₽</span>
+            <button class="btn-topup" onclick="openTopUpModal()">+ Пополнить</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Баннер -->
+        <div class="promo-banner">
+            <div>
+                <div class="promo-title">Демо-Баланс</div>
+                <div class="promo-desc">Симулятор без рисков. Играйте только на виртуальные очки!</div>
+            </div>
+            <button class="promo-btn" onclick="addDemoCredits()">Получить 500 ₽</button>
+        </div>
+
+        <!-- Лента ставок -->
+        <div class="live-feed" id="liveFeed">
+            <div class="live-card"><span>@user1</span> <span class="win">+500 ₽</span></div>
+            <div class="live-card"><span>@alex_77</span> <span class="win">+1 200 ₽</span></div>
+            <div class="live-card"><span>@denis</span> <span class="win">+250 ₽</span></div>
+        </div>
+
+        <!-- Сетка игр -->
+        <div class="section-title">Игры</div>
+        <div class="games-grid">
+            <div class="game-card card-bg-upgrade" onclick="openGame('Апгрейд')">
+                <div class="online-badge"><div class="online-dot"></div> 338 играют</div>
+                <div class="game-name">Апгрейд</div>
+            </div>
+            <div class="game-card card-bg-storm" onclick="openGame('Шторм')">
+                <div class="online-badge"><div class="online-dot"></div> 13 играют</div>
+                <div class="game-name">Шторм</div>
+            </div>
+            <div class="game-card card-bg-rocket" onclick="openGame('Ракетка')">
+                <div class="online-badge"><div class="online-dot"></div> 189 играют</div>
+                <div class="game-name">Ракетка</div>
+            </div>
+            <div class="game-card card-bg-cases" onclick="openGame('Кейсы')">
+                <div class="online-badge"><div class="online-dot"></div> 1 540 играют</div>
+                <div class="game-name">Кейсы</div>
+            </div>
+            <div class="game-card card-bg-upgrade" onclick="openGame('Коровка')">
+                <div class="online-badge"><div class="online-dot"></div> 203 играют</div>
+                <div class="game-name">Коровка</div>
+            </div>
+            <div class="game-card card-bg-storm" onclick="openGame('Мины')">
+                <div class="online-badge"><div class="online-dot"></div> 54 играют</div>
+                <div class="game-name">Мины</div>
+            </div>
+            <div class="game-card card-bg-rocket" onclick="openGame('Plinko')">
+                <div class="online-badge"><div class="online-dot"></div> 26 играют</div>
+                <div class="game-name">Plinko</div>
+            </div>
+            <div class="game-card card-bg-cases" onclick="openGame('Блэкджек')">
+                <div class="online-badge"><div class="online-dot"></div> 10 играют</div>
+                <div class="game-name">Блэкджек</div>
+            </div>
+        </div>
+
+        <!-- Футер -->
+        <footer>
+            <div class="footer-links">
+                <a href="#" class="footer-link" onclick="openAntiLudoInfo()">Анти-Лудомания</a>
+                <a href="#" class="footer-link">Честная игра (RTP)</a>
+                <a href="#" class="footer-link">Поддержка</a>
+            </div>
+            <div>© 2026 RubUp Simulator. Без реальных денег.</div>
+        </footer>
+    </div>
+
+    <!-- Модальное окно пополнения (Анти-финансовое сообщение) -->
+    <div class="modal" id="topupModal">
+        <div class="modal-content">
+            <div class="modal-title">Бесплатный демо-баланс</div>
+            <div class="modal-desc">
+                В этом приложении **запрещены реальные деньги**. Вы не можете пополнить счет с карты. 
+                <br><br>
+                Нажмите кнопку ниже, чтобы сбросить виртуальный баланс на 1 000 ₽.
+            </div>
+            <button class="btn-modal-close" onclick="resetBalance()">Начислить 1 000 ₽ (Бесплатно)</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно с выбором игры -->
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalGameTitle">Игра</div>
+            <div class="modal-desc">Запуск игрового модуля... В следующей версии здесь появится интерактивная механика!</div>
+            <button class="btn-modal-close" onclick="closeGameModal()">Назад к выбору</button>
+        </div>
+    </div>
+
+    <script>
+        // Инициализация Telegram SDK
+        const tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) {
+            tg.expand();
+        }
+
+        // Состояние приложения
+        let userBalance = parseInt(localStorage.getItem('rubup_balance')) || 1000;
+
+        function updateBalanceUI() {
+            document.getElementById('balance').innerText = userBalance.toLocaleString('ru-RU') + ' ₽';
+            localStorage.setItem('rubup_balance', userBalance);
+        }
+
+        function openTopUpModal() {
+            document.getElementById('topupModal').style.display = 'flex';
+        }
+
+        function resetBalance() {
+            userBalance = 1000;
+            updateBalanceUI();
+            document.getElementById('topupModal').style.display = 'none';
+        }
+
+        function addDemoCredits() {
+            userBalance += 500;
+            updateBalanceUI();
+        }
+
+        function openGame(name) {
+            document.getElementById('modalGameTitle').innerText = name;
+            document.getElementById('gameModal').style.display = 'flex';
+        }
+
+        function closeGameModal() {
+            document.getElementById('gameModal').style.display = 'none';
+        }
+
+        function openAntiLudoInfo() {
+            alert("RubUp — это симулятор для контроля игровых импульсов. Помните: в любых азартных играх математическое ожидание всегда на стороне заведения!");
+        }
+
+        // Закрытие модалок по клику вне окна
+        window.onclick = function(event) {
+            const modal1 = document.getElementById('topupModal');
+            const modal2 = document.getElementById('gameModal');
+            if (event.target === modal1) modal1.style.display = "none";
+            if (event.target === modal2) modal2.style.display = "none";
+        }
+
+        // Первичная установка баланса
+        updateBalanceUI();
+    </script>
 </body>
 </html>
