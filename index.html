@@ -8,13 +8,14 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-dark: #0d0f17;
+            --bg-color: #0f111a;
             --card-bg: #161926;
+            --card-border: #23273c;
             --accent-purple: #6c5ce7;
             --accent-green: #2ed573;
             --accent-red: #ff4757;
-            --text-white: #ffffff;
-            --text-dim: #8e94a5;
+            --text-main: #ffffff;
+            --text-sub: #8e94a5;
         }
 
         * {
@@ -26,8 +27,8 @@
         }
 
         body {
-            background-color: var(--bg-dark);
-            color: var(--text-white);
+            background-color: var(--bg-color);
+            color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             justify-content: center;
@@ -35,18 +36,17 @@
             min-height: 100vh;
         }
 
-        /* Ограничиваем ширину под мобильный формат */
         .app-wrapper {
             width: 100%;
             max-width: 420px;
             height: 100vh;
-            max-height: 880px;
+            max-height: 850px;
             background: #121420;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
         }
 
         /* Шапка */
@@ -56,7 +56,7 @@
             align-items: center;
             padding: 12px 16px;
             background: #181b2a;
-            border-bottom: 1px solid #23273c;
+            border-bottom: 1px solid var(--card-border);
         }
 
         .logo {
@@ -67,58 +67,111 @@
             -webkit-text-fill-color: transparent;
         }
 
-        .balance-badge {
-            background: #0a0b12;
-            padding: 4px 10px;
-            border-radius: 16px;
-            border: 1px solid #282c42;
+        .balance-container {
             display: flex;
             align-items: center;
-            gap: 8px;
+            background: #0a0b12;
+            border-radius: 18px;
+            padding: 4px 6px 4px 12px;
+            border: 1px solid var(--card-border);
         }
 
-        .balance-val {
-            color: var(--accent-green);
+        .balance-amount {
             font-weight: 800;
             font-size: 14px;
+            margin-right: 8px;
+            color: var(--accent-green);
         }
 
         .btn-topup {
             background: var(--accent-purple);
             border: none;
             color: white;
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 12px;
             font-weight: 700;
+            font-size: 11px;
             cursor: pointer;
         }
 
-        /* Холст игры */
-        .game-container {
+        /* Контент игры */
+        .game-content {
             flex: 1;
-            position: relative;
+            padding: 16px;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #1a1d2e;
-            padding: 10px;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
         }
 
-        canvas {
+        .back-link {
+            font-size: 13px;
+            color: var(--text-sub);
+            cursor: pointer;
+            width: fit-content;
+        }
+
+        /* Полосы дороги (снизу вверх) */
+        .lanes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .lane-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
             border-radius: 12px;
-            background: #252a3e;
-            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .lane-card.active {
+            border-color: var(--accent-green);
+            background: #152920;
+            box-shadow: 0 0 12px rgba(46, 213, 115, 0.15);
+        }
+
+        .lane-card.crashed {
+            border-color: var(--accent-red);
+            background: #2b1419;
+        }
+
+        .lane-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lane-mult {
+            background: #1f2336;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #a29bfe;
+        }
+
+        .lane-card.active .lane-mult {
+            background: #1e3b2e;
+            color: var(--accent-green);
         }
 
         /* Панель управления */
-        .controls {
-            background: #161926;
-            padding: 12px;
-            border-top: 1px solid #23273c;
+        .controls-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 14px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
+            margin-top: auto;
         }
 
         .diff-grid {
@@ -129,8 +182,8 @@
 
         .diff-btn {
             background: #0f111a;
-            border: 1px solid #282c42;
-            color: var(--text-dim);
+            border: 1px solid var(--card-border);
+            color: var(--text-sub);
             padding: 8px 0;
             border-radius: 8px;
             font-size: 11px;
@@ -147,11 +200,11 @@
 
         .bet-box {
             display: flex;
+            align-items: center;
             background: #0d0f17;
             border-radius: 10px;
             padding: 4px 8px;
-            border: 1px solid #282c42;
-            align-items: center;
+            border: 1px solid var(--card-border);
         }
 
         .bet-input {
@@ -162,12 +215,13 @@
             font-size: 15px;
             font-weight: 700;
             outline: none;
+            padding: 4px;
         }
 
         .btn-mod {
             background: #202436;
             border: none;
-            color: var(--text-dim);
+            color: var(--text-sub);
             padding: 6px 8px;
             border-radius: 6px;
             font-size: 11px;
@@ -176,30 +230,33 @@
             cursor: pointer;
         }
 
-        .btn-main {
+        .btn-action {
             background: linear-gradient(135deg, #6c5ce7, #8c7ae6);
             border: none;
             color: white;
             padding: 14px;
             border-radius: 12px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 800;
             cursor: pointer;
             width: 100%;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
         }
 
-        .btn-main.take {
+        .btn-action.take {
             background: linear-gradient(135deg, #2ed573, #26af5f);
+            box-shadow: 0 4px 15px rgba(46, 213, 115, 0.3);
         }
 
         /* Модалка */
         .modal {
             display: none;
-            position: absolute;
+            position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(5px);
-            z-index: 10;
+            z-index: 50;
             justify-content: center;
             align-items: center;
             padding: 20px;
@@ -211,49 +268,59 @@
             border-radius: 16px;
             padding: 20px;
             text-align: center;
+            width: 100%;
+            max-width: 320px;
         }
     </style>
 </head>
 <body>
 
     <div class="app-wrapper">
+        <!-- Шапка -->
         <header>
             <div class="logo">RubUp</div>
-            <div class="balance-badge">
-                <span class="balance-val" id="balanceVal">1 000 ₽</span>
+            <div class="balance-container">
+                <span class="balance-amount" id="balanceVal">990 ₽</span>
                 <button class="btn-topup" onclick="showTopup()">+ Пополнить</button>
             </div>
         </header>
 
-        <div class="game-container">
-            <!-- Графический холст для дороги, машин и коровки -->
-            <canvas id="gameCanvas" width="340" height="380"></canvas>
-        </div>
+        <!-- Основной экран игры -->
+        <div class="game-content">
+            <div class="back-link" onclick="alert('Вы в игре Коровка!')">‹ Назад в меню</div>
 
-        <div class="controls">
-            <div class="diff-grid">
-                <div class="diff-btn active" id="d-easy" onclick="setDiff('easy')">Лёгкая</div>
-                <div class="diff-btn" id="d-medium" onclick="setDiff('medium')">Средняя</div>
-                <div class="diff-btn" id="d-hard" onclick="setDiff('hard')">Тяжёлая</div>
-                <div class="diff-btn" id="d-hardcore" onclick="setDiff('hardcore')">Хардкор</div>
+            <!-- Список полос (от 5 до 1 сверху вниз) -->
+            <div class="lanes-list" id="lanesContainer">
+                <!-- Генерируются скриптом -->
             </div>
 
-            <div class="bet-box">
-                <span style="color:#8e94a5; margin-right:6px; font-weight:700;">₽</span>
-                <input type="number" id="betInput" class="bet-input" value="10" min="1">
-                <button class="btn-mod" onclick="modBet('half')">½</button>
-                <button class="btn-mod" onclick="modBet('double')">2×</button>
-                <button class="btn-mod" onclick="modBet('max')">МАКС</button>
-            </div>
+            <!-- Панель управления -->
+            <div class="controls-panel">
+                <div class="diff-grid">
+                    <div class="diff-btn active" id="d-easy" onclick="setDiff('easy')">Лёгкая</div>
+                    <div class="diff-btn" id="d-medium" onclick="setDiff('medium')">Средняя</div>
+                    <div class="diff-btn" id="d-hard" onclick="setDiff('hard')">Тяжёлая</div>
+                    <div class="diff-btn" id="d-hardcore" onclick="setDiff('hardcore')">Хардкор</div>
+                </div>
 
-            <button class="btn-main" id="actionBtn" onclick="handleAction()">Начать игру</button>
+                <div class="bet-box">
+                    <span style="color:var(--text-sub); margin-right:6px; font-weight:700;">₽</span>
+                    <input type="number" id="betInput" class="bet-input" value="10" min="1">
+                    <button class="btn-mod" onclick="modBet('half')">½</button>
+                    <button class="btn-mod" onclick="modBet('double')">2×</button>
+                    <button class="btn-mod" onclick="modBet('max')">МАКС</button>
+                </div>
+
+                <button class="btn-action" id="actionBtn" onclick="handleAction()">Начать игру</button>
+            </div>
         </div>
 
+        <!-- Модалка пополнения -->
         <div class="modal" id="topupModal">
             <div class="modal-card">
-                <h3 style="margin-bottom:10px;">Симулятор с 0 ₽ риска</h3>
-                <p style="font-size:13px; color:#8e94a5; margin-bottom:16px;">Здесь нет реальных денег. Это инструмент для снижения лудомании.</p>
-                <button class="btn-main" onclick="resetBal()">Сбросить на 1 000 ₽</button>
+                <h3 style="margin-bottom:10px;">Демо-баланс</h3>
+                <p style="font-size:13px; color:var(--text-sub); margin-bottom:16px;">Реальные деньги запрещены. Это симулятор для контроля азартных привычек.</p>
+                <button class="btn-action" onclick="resetBal()">Сбросить на 1 000 ₽</button>
             </div>
         </div>
     </div>
@@ -262,10 +329,10 @@
         const tg = window.Telegram ? window.Telegram.WebApp : null;
         if (tg) tg.expand();
 
-        let balance = parseInt(localStorage.getItem('rubup_bal')) || 1000;
+        let balance = parseInt(localStorage.getItem('rubup_bal')) ?? 990;
         let currentDiff = 'easy';
         let gameState = 'IDLE'; // IDLE, PLAYING
-        let currentStep = -1; // -1: на старте, 0..4: полосы
+        let currentStep = -1; // -1 на старте, 0..4 полосы
         let currentBet = 10;
 
         const diffs = {
@@ -275,70 +342,33 @@
             hardcore: { mults: [1.40, 2.00, 3.10, 4.80, 7.50], crash: 0.50 }
         };
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
         function updateUI() {
             document.getElementById('balanceVal').innerText = balance.toLocaleString('ru-RU') + ' ₽';
             localStorage.setItem('rubup_bal', balance);
+            renderLanes();
         }
 
-        // Отрисовка игрового поля (Canvas)
-        function drawScene(failed = false) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Трава / обочина
-            ctx.fillStyle = "#1e241e";
-            ctx.fillRect(0, 0, 50, canvas.height);
-
-            // Дорога
-            ctx.fillStyle = "#282c3c";
-            ctx.fillRect(50, 0, canvas.width - 50, canvas.height);
-
-            const laneHeight = canvas.height / 5;
+        function renderLanes() {
+            const container = document.getElementById('lanesContainer');
+            container.innerHTML = '';
             const mults = diffs[currentDiff].mults;
 
-            // Рисуем 5 полос дороги (снизу вверх)
-            for (let i = 0; i < 5; i++) {
-                const y = canvas.height - (i + 1) * laneHeight;
+            // Рендерим полосы сверху вниз (от Полосы 5 до Полосы 1)
+            for (let i = 4; i >= 0; i--) {
+                const isActive = (currentStep === i);
+                const card = document.createElement('div');
+                card.className = `lane-card ${isActive ? 'active' : ''}`;
 
-                // Разделительная линия
-                ctx.strokeStyle = "#383e56";
-                ctx.setLineDash([8, 6]);
-                ctx.beginPath();
-                ctx.moveTo(50, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
+                let titleHtml = `Полоса ${i + 1}`;
+                if (isActive) {
+                    titleHtml = `🐮 Полоса ${i + 1}`;
+                }
 
-                // Люки / Значки коэффициентов
-                const isCurrent = (currentStep === i && !failed);
-                const isFailed = (currentStep === i && failed);
-
-                ctx.fillStyle = isCurrent ? "#2ed573" : (isFailed ? "#ff4757" : "#1a1d2b");
-                ctx.beginPath();
-                ctx.roundRect(canvas.width - 80, y + 12, 70, 30, 8);
-                ctx.fill();
-
-                ctx.fillStyle = "#ffffff";
-                ctx.font = "bold 12px sans-serif";
-                ctx.textAlign = "center";
-                ctx.fillText(`x${mults[i].toFixed(2)}`, canvas.width - 45, y + 31);
-            }
-
-            // Рисуем коровку 🐮
-            const cowY = currentStep === -1 
-                ? canvas.height - 35 
-                : canvas.height - (currentStep * laneHeight) - (laneHeight / 2) + 8;
-            
-            ctx.font = "28px sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText(failed ? "💥" : "🐮", 25, cowY);
-
-            // Если машина сбила
-            if (failed) {
-                ctx.fillStyle = "#ff4757";
-                ctx.font = "bold 16px sans-serif";
-                ctx.fillText("СБИЛА МАШИНА!", canvas.width / 2 + 25, cowY);
+                card.innerHTML = `
+                    <div class="lane-title">${titleHtml}</div>
+                    <div class="lane-mult">x${mults[i].toFixed(2)}</div>
+                `;
+                container.appendChild(card);
             }
         }
 
@@ -347,7 +377,7 @@
             currentDiff = d;
             document.querySelectorAll('.diff-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`d-${d}`).classList.add('active');
-            drawScene();
+            renderLanes();
         }
 
         function modBet(type) {
@@ -364,7 +394,7 @@
             if (gameState === 'IDLE') {
                 let bet = parseInt(document.getElementById('betInput').value) || 0;
                 if (bet <= 0 || bet > balance) {
-                    alert("Проверьте ставку!");
+                    alert("Неверная ставка или недостаточно виртуальных средств!");
                     return;
                 }
                 balance -= bet;
@@ -372,48 +402,61 @@
                 updateUI();
 
                 gameState = 'PLAYING';
-                currentStep = -1;
-                drawScene();
-
-                const btn = document.getElementById('actionBtn');
-                btn.innerText = "Сделать шаг 🐮";
-                btn.onclick = makeStep;
+                currentStep = 0; // Первый шаг на полосу 1
+                
+                updateGameButton();
+                renderLanes();
+            } else {
+                makeStep();
             }
         }
 
         function makeStep() {
-            currentStep++;
             const cfg = diffs[currentDiff];
 
-            // Шанс аварии
+            // Проверка на столкновение с машиной
             if (Math.random() < cfg.crash) {
-                drawScene(true);
-                setTimeout(() => {
-                    alert(`🚗 Авария! Потеряно ${currentBet} виртуальных ₽.\n\nПомните: на дистанции казино всегда в плюсе.`);
-                    resetGame();
-                }, 100);
+                alert(`🚗 Бабах! Корову сбила машина.\nПотеряно: ${currentBet} виртуальных ₽.\n\nПсихологический итог: на дистанции казино всегда забирает всё.`);
+                resetGame();
                 return;
             }
 
-            drawScene();
+            currentStep++;
 
-            const win = Math.floor(currentBet * cfg.mults[currentStep]);
+            if (currentStep > 4) {
+                // Успешно пройдены все 5 полос!
+                takeWin();
+                return;
+            }
+
+            updateGameButton();
+            renderLanes();
+        }
+
+        function updateGameButton() {
             const btn = document.getElementById('actionBtn');
-            btn.innerText = `Забрать ${win} ₽ (x${cfg.mults[currentStep].toFixed(2)})`;
-            btn.className = "btn-main take";
-            btn.onclick = takeWin;
+            const mult = diffs[currentDiff].mults[currentStep];
+            const currentWin = Math.floor(currentBet * mult);
 
-            if (currentStep === 4) {
-                setTimeout(takeWin, 200);
+            if (gameState === 'PLAYING') {
+                btn.innerText = `Забрать ${currentWin} ₽ (x${mult.toFixed(2)})`;
+                btn.className = "btn-action take";
+                // Меняем поведение кнопки на "Забрать выигрыш"
+                btn.onclick = takeWin;
+            } else {
+                btn.innerText = "Начать игру";
+                btn.className = "btn-action";
+                btn.onclick = handleAction;
             }
         }
 
         function takeWin() {
             if (gameState !== 'PLAYING') return;
-            const win = Math.floor(currentBet * diffs[currentDiff].mults[currentStep]);
+            const mult = diffs[currentDiff].mults[currentStep];
+            const win = Math.floor(currentBet * mult);
             balance += win;
-            updateUI();
-            alert(`🎉 Выиграно ${win} виртуальных ₽!`);
+            
+            alert(`🎉 Победа! Вы забрали ${win} виртуальных ₽.`);
             resetGame();
         }
 
@@ -422,16 +465,16 @@
             currentStep = -1;
             const btn = document.getElementById('actionBtn');
             btn.innerText = "Начать игру";
-            btn.className = "btn-main";
+            btn.className = "btn-action";
             btn.onclick = handleAction;
-            drawScene();
+            updateUI();
         }
 
         function showTopup() { document.getElementById('topupModal').style.display = 'flex'; }
-        function resetBal() { balance = 1000; updateUI(); document.getElementById('topupModal').style.display = 'none'; drawScene(); }
+        function resetBal() { balance = 1000; updateUI(); document.getElementById('topupModal').style.display = 'none'; }
 
         updateUI();
-        drawScene();
     </script>
 </body>
+</html>
 </html>
